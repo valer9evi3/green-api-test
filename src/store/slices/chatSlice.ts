@@ -4,6 +4,7 @@ import { ChatState, Message } from '../../types';
 const initialState: ChatState = {
   messages: [],
   recipientPhone: '',
+  recipientName: '',
   isPhoneSet: false,
   error: null,
 };
@@ -15,6 +16,9 @@ const chatSlice = createSlice({
     setRecipientPhone: (state, action: PayloadAction<string>) => {
       state.recipientPhone = action.payload;
       state.isPhoneSet = true;
+    },
+    setRecipientName: (state, action: PayloadAction<string>) => {
+      state.recipientName = action.payload;
     },
     addMessage: (state, action: PayloadAction<Message>) => {
       state.messages.push(action.payload);
@@ -31,6 +35,11 @@ const chatSlice = createSlice({
   },
 });
 
-export const { setRecipientPhone, addMessage, setError, resetChat } =
-  chatSlice.actions;
+export const {
+  setRecipientPhone,
+  addMessage,
+  setError,
+  resetChat,
+  setRecipientName,
+} = chatSlice.actions;
 export default chatSlice.reducer;

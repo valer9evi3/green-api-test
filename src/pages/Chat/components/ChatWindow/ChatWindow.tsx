@@ -1,22 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Send from '../assets/icons/send.svg?react';
-import Phone from '../assets/icons/phone.svg?react';
+import { memo, useEffect, useRef, useState } from 'react';
+import Send from '@/assets/icons/send.svg?react';
+
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { sendMessage, receiveMessage } from '../api';
-import { LanguageSwitcher } from './LanguageSwitcher';
-import { RootState } from '../store';
-import { logout } from '../store/slices/authSlice';
+import { receiveMessage, sendMessage } from '@/api';
+import { logout } from '@/store/slices/authSlice';
 import {
-  setRecipientPhone,
   addMessage,
+  setRecipientName,
   setError,
   resetChat,
-} from '../store/slices/chatSlice';
+} from '@/store/slices/chatSlice';
+import { formatPhoneNumber } from '@/utils';
+import { LanguageSwitcher } from '@/widgets/LanguageSwitcher';
+import { RootState } from '@/store';
 
-export const Chat: React.FC = () => {
+function ChatWindow() {
   const [newMessage, setNewMessage] = useState('');
-  const [phoneInput, setPhoneInput] = useState('');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -24,16 +25,11 @@ export const Chat: React.FC = () => {
   const { idInstance, apiTokenInstance } = useSelector(
     (state: RootState) => state.auth
   );
-  const { messages, recipientPhone, isPhoneSet, error } = useSelector(
-    (state: RootState) => state.chat
-  );
+  const { messages, recipientPhone, recipientName, isPhoneSet, error } =
+    useSelector((state: RootState) => state.chat);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handlePhoneInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPhoneInput(e.target.value);
   };
 
   useEffect(() => {
@@ -48,16 +44,18 @@ export const Chat: React.FC = () => {
         const notification = await receiveMessage(idInstance, apiTokenInstance);
         if (
           notification &&
+          notification.body?.typeWebhook === 'incomingMessageReceived' &&
           notification.body?.messageData?.extendedTextMessageData
         ) {
           dispatch(
             addMessage({
               id: notification.body.idMessage,
               text: notification.body.messageData.extendedTextMessageData.text,
-              timestamp: notification.body.timestamp,
+              timestamp: notification.body.timestamp * 1000,
               isOutgoing: false,
             })
           );
+          dispatch(setRecipientName(notification.body.senderData.senderName));
           dispatch(setError(null));
         }
       } catch (error) {
@@ -69,9 +67,16 @@ export const Chat: React.FC = () => {
       }
     };
 
-    const interval = setInterval(pollMessages, 10000);
+    const interval = setInterval(
+      pollMessages,
+      +import.meta.env.VITE_DELAY_TIME
+    );
     return () => clearInterval(interval);
   }, [isPhoneSet, idInstance, apiTokenInstance, dispatch, t]);
+
+  const handleChangeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,56 +106,20 @@ export const Chat: React.FC = () => {
     }
   };
 
-  const handleSetPhone = (e: React.FormEvent) => {
-    e.preventDefault();
-    dispatch(setRecipientPhone(phoneInput));
-  };
-
   const handleLogout = () => {
     dispatch(resetChat());
     dispatch(logout());
   };
-
-  if (!isPhoneSet) {
-    return (
-      <div className='min-h-screen flex items-center justify-center bg-gray-100'>
-        <div className='bg-white p-8 rounded-lg shadow-md w-full max-w-md'>
-          <div className='flex items-center justify-between mb-8'>
-            <Phone className='w-12 h-12 fill-green-600' />
-            <LanguageSwitcher />
-          </div>
-          <form onSubmit={handleSetPhone}>
-            <div className='mb-4'>
-              <label className='block text-gray-700 text-sm font-bold mb-2'>
-                {t('chat.recipientPhone')}
-              </label>
-              <input
-                type='text'
-                value={phoneInput}
-                onChange={handlePhoneInputChange}
-                placeholder={t('chat.phonePlaceholder')}
-                className='w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500'
-                required
-              />
-            </div>
-            <button
-              type='submit'
-              className='w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors'
-            >
-              {t('chat.startChat')}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className='flex flex-col h-screen bg-gray-100'>
       <div className='bg-green-600 p-4 text-white flex justify-between items-center'>
         <div className='flex items-center space-x-4'>
           <h2 className='font-bold'>
-            {t('chat.chatWith')} {recipientPhone}
+            {t('chat.chatWith')}{' '}
+            {recipientName !== ''
+              ? recipientName
+              : formatPhoneNumber(recipientPhone)}
           </h2>
           <LanguageSwitcher />
         </div>
@@ -201,7 +170,7 @@ export const Chat: React.FC = () => {
           <input
             type='text'
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={handleChangeInput}
             placeholder={t('chat.messagePlaceholder')}
             className='flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500'
           />
@@ -215,4 +184,6 @@ export const Chat: React.FC = () => {
       </form>
     </div>
   );
-};
+}
+
+export default memo(ChatWindow);

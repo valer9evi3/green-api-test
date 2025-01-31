@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import LogIn from '../assets/icons/login.svg?react';
+import React, { memo, useState } from 'react';
+import LogIn from '@/assets/icons/login.svg?react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
-import { login } from '../store/slices/authSlice';
-import { LanguageSwitcher } from './LanguageSwitcher';
+import { login } from '@/store/slices/authSlice';
+import { LanguageSwitcher } from '@/widgets/LanguageSwitcher';
 
-export const Login: React.FC = () => {
+function Login() {
   const [idInstance, setIdInstance] = useState('');
   const [apiTokenInstance, setApiTokenInstance] = useState('');
   const { t } = useTranslation();
@@ -34,6 +34,7 @@ export const Login: React.FC = () => {
             <input
               type='text'
               value={idInstance}
+              key={'idInstance'}
               onChange={(e) => setIdInstance(e.target.value)}
               className='w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500'
               placeholder={t('login.idInstance')}
@@ -47,6 +48,7 @@ export const Login: React.FC = () => {
             <input
               type='password'
               value={apiTokenInstance}
+              key={'apiTokenInstance'}
               onChange={(e) => setApiTokenInstance(e.target.value)}
               className='w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500'
               placeholder={t('login.apiTokenInstance')}
@@ -63,4 +65,6 @@ export const Login: React.FC = () => {
       </div>
     </div>
   );
-};
+}
+
+export default memo(Login);
