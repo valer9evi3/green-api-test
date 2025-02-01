@@ -1,0 +1,24 @@
+name: building
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.6.0]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Staring Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: install modules
+        run: npm ci --force
+      - name: build production project
+        run: npm run build
+        if: always()
