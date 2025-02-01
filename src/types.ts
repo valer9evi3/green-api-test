@@ -43,8 +43,11 @@ export interface APIResponse {
     };
     messageData: {
       typeMessage: string;
-      extendedTextMessageData: {
+      extendedTextMessageData?: {
         text: string;
+      };
+      textMessageData?: {
+        textMessage: string;
       };
     };
   };

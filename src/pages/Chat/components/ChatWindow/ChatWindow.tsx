@@ -42,15 +42,21 @@ function ChatWindow() {
     const pollMessages = async () => {
       try {
         const notification = await receiveMessage(idInstance, apiTokenInstance);
+        const textMessage = notification?.body?.messageData
+          ?.extendedTextMessageData
+          ? notification?.body?.messageData?.extendedTextMessageData?.text
+          : notification?.body?.messageData?.textMessageData
+          ? notification.body.messageData.textMessageData.textMessage
+          : '';
         if (
           notification &&
           notification.body?.typeWebhook !== 'outgoingAPIMessageReceived' &&
-          notification.body?.messageData?.extendedTextMessageData
+          textMessage !== ''
         ) {
           dispatch(
             addMessage({
               id: notification.body.idMessage,
-              text: notification.body.messageData.extendedTextMessageData.text,
+              text: textMessage,
               timestamp: notification.body.timestamp * 1000,
               isOutgoing: false,
             })
