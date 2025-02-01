@@ -44,7 +44,7 @@ function ChatWindow() {
         const notification = await receiveMessage(idInstance, apiTokenInstance);
         if (
           notification &&
-          notification.body?.typeWebhook === 'incomingMessageReceived' &&
+          notification.body?.typeWebhook !== 'outgoingAPIMessageReceived' &&
           notification.body?.messageData?.extendedTextMessageData
         ) {
           dispatch(
